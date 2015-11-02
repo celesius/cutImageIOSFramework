@@ -221,13 +221,19 @@ cv::Mat CutoutImagePacking::getFinalColorMergeImg()
     cv::Mat blobMat = seedMatVector[selectSeedMat];
     cv::Mat edgeBlurResult;
     cutoutImage->edgeBlur( srcColorImg, blobMat, 1, edgeBlurResult);  //dstMat就是扣取结果，还要对结果进行椭圆拟合和旋转
-    cutoutImage->rotateMat(cutoutImage->classCutMat, dstMat, edgeBlurResult);
+//    cutoutImage->rotateMat(cutoutImage->classCutMat, dstMat, edgeBlurResult);
+    cv::Mat wholeImageRotate;
+    cutoutImage->rotateMat(cutoutImage->classCutMat, dstMat, edgeBlurResult, srcColorImg, wholeImageRotate);
     
    printf(" b  cutImageByRect rows = %d \n",dstMat.rows);
    printf(" b  cutImageByRect cols = %d \n",dstMat.cols);
     
     dstMat = cutoutImage->scaleFCMI2InputColorImageSize(dstMat);
-    return dstMat;
+    //wholeImageRotate = cutoutImage->scaleFCMI2InputColorImageSize(wholeImageRotate);
+    //cv::Mat in;
+    //cutoutImage->imageEdgeBlur(dstMat, wholeImageRotate, in);
+    //return in.clone();
+    return dstMat.clone();
 }
 
 cv::Mat CutoutImagePacking::getDebugMat()

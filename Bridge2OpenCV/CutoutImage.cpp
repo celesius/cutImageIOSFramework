@@ -538,17 +538,18 @@ void CutoutImage::deleteMask(const cv::Mat deleteMat,cv::Mat &seedMat) {
     }
 }
 
-void CutoutImage::rotateMat (const cv::Mat srcMat ,cv::Mat &dstMat,const cv::Mat colorMat)
+//void CutoutImage::rotateMat (const cv::Mat srcMat ,cv::Mat &dstMat,const cv::Mat colorMat)
+void CutoutImage::rotateMat (const cv::Mat srcMat ,cv::Mat &dstMat,const cv::Mat colorMat, const cv::Mat wholeImage, cv::Mat &wholeImageCut)
 {
     std::vector<std::vector<cv::Point>> contours;
     std::vector<cv::Vec4f> lineVector;
     cv::Mat aMat = srcMat.clone();
     cv::findContours(aMat, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
     cv::Mat showMat = cv::Mat(aMat.rows,aMat.cols,CV_8UC3,cv::Scalar(0,0,0));
-    dstMat = aMat.clone();
-    
+    //dstMat = aMat.clone();
+    dstMat = cv::Mat(srcMat.size(), CV_8UC4, cv::Scalar(0,0,0,0));
     std::vector<cv::Rect> nailRect;
-    
+    cv::Mat wholeImageRotate;
     for(int i = 0;i<(int)contours.size();i++)
     {
         if(contours[i].size() > 5)
@@ -575,7 +576,8 @@ void CutoutImage::rotateMat (const cv::Mat srcMat ,cv::Mat &dstMat,const cv::Mat
             //cv::Mat rotMat = cv::Mat(2,3,CV_32FC1);
             cv::Mat rotMat =   cv::getRotationMatrix2D(tmp.center,rotAngle, 1);
             //cv::transform(srcMat, dstMat, rotMat);
-            cv::warpAffine(colorMat, dstMat, rotMat, cv::Size(std::max(srcMat.rows,srcMat.cols),std::max(srcMat.rows,srcMat.cols)));
+            cv::warpAffine(colorMat, dstMat, rotMat, cv::Size(std::max(srcMat.rows,srcMat.cols),std::max(srcMat.rows,srcMat.cols)), CV_INTER_NN);
+            cv::warpAffine(wholeImage.clone(), wholeImageRotate, rotMat, cv::Size(std::max(srcMat.rows,srcMat.cols),std::max(srcMat.rows,srcMat.cols)), CV_INTER_LANCZOS4);
             //cv::imshow("RRRRRR", dstMat);
             
         }
@@ -643,12 +645,83 @@ void CutoutImage::rotateMat (const cv::Mat srcMat ,cv::Mat &dstMat,const cv::Mat
     std::cout<< cutRect <<std::endl;
     
     cv::Mat cutDst;
-    CutoutImage::cutImageByRect(dstMat, cutRect, cutDst); //截图
+    cv::Mat wholeImageRotateBGRA;
+    cutImageByRect(dstMat, cutRect, cutDst); //截图
+    addAlphaChannle(wholeImageRotate, wholeImageRotateBGRA);
+    cutImageByRect(wholeImageRotateBGRA, cutRect, wholeImageCut); //截图
     
     dstMat = cutDst.clone();
     //cv::rectangle(dstMat, lt, rb, cv::Scalar(0,0,255,0));
     //cv::imshow("RRRRRR", dstMat);
 }
+
+
+void CutoutImage::addAlphaChannle (const cv::Mat srcMat , cv::Mat &dstMat ){
+    
+    cv::Mat aSrcMat = srcMat.clone();
+    
+    if(aSrcMat.channels() == 4) {
+        dstMat = aSrcMat.clone();
+    }
+    else{
+        dstMat = cv::Mat(aSrcMat.size(), CV_8UC4, cv::Scalar(0,0,0,0));
+        for (int y = 0; y < aSrcMat.rows; y++) {
+            uchar *srcMatRowData = aSrcMat.ptr<uchar>(y);
+            uchar *dstMatRowData = dstMat.ptr<uchar>(y);
+            for (int x = 0; x < aSrcMat.cols; x++) {
+                if(srcMatRowData[x*3] != 0 || srcMatRowData[x*3 + 1] != 0 || srcMatRowData[x*3 + 2] != 0){
+                    dstMatRowData[x*4] = srcMatRowData[x*3];
+                    dstMatRowData[x*4 + 1] = srcMatRowData[x*3 + 1];
+                    dstMatRowData[x*4 + 2] = srcMatRowData[x*3 + 2];
+                    dstMatRowData[x*4 + 3] = 255;
+                }
+            }
+        }
+    }
+}
+
+void CutoutImage::imageEdgeBlur( const cv::Mat bgraImg, const cv::Mat wholeImage , cv::Mat &dstMat ) {
+    cv::Mat img= bgraImg.clone();
+    
+    cv::Mat whole_image = wholeImage.clone();
+    
+    whole_image.convertTo(whole_image,CV_32FC4,1.0/255.0);
+    cv::resize(whole_image,whole_image,img.size());
+    img.convertTo(img,CV_32FC4,1.0/255.0);
+    
+    cv::Mat bg= cv::Mat(img.size(),CV_32FC4);
+    bg=cv::Scalar(1.0,1.0,1.0);
+    
+    // Prepare mask
+    cv::Mat mask;
+    cv::Mat img_gray;
+    cv::cvtColor(img,img_gray,cv::COLOR_BGRA2GRAY);
+    img_gray.convertTo(mask,CV_32FC1);
+    threshold(1.0-mask,mask,0.9,1.0,cv::THRESH_BINARY_INV);
+    
+    cv::GaussianBlur(mask,mask,cv::Size(21,21),11.0);
+    //imshow("result",mask);
+    //cv::waitKey(0);
+    
+    // Reget the image fragment with smoothed mask
+    cv::Mat res;
+    
+    std::vector<cv::Mat> ch_img(4);
+    std::vector<cv::Mat> ch_bg(4);
+    cv::split(whole_image,ch_img);
+    cv::split(bg,ch_bg);
+    ch_img[0]=ch_img[0].mul(mask)+ch_bg[0].mul(1.0-mask);
+    ch_img[1]=ch_img[1].mul(mask)+ch_bg[1].mul(1.0-mask);
+    ch_img[2]=ch_img[2].mul(mask)+ch_bg[2].mul(1.0-mask);
+    ch_img[3]=ch_img[3].mul(mask)+ch_bg[3].mul(1.0-mask);
+    cv::merge(ch_img,res);
+    cv::merge(ch_bg,bg);
+    //checkAlpha(res);
+    //res.convertTo(res, CV_BGRA2BGR);
+    res.convertTo(res, CV_8UC4,255);
+    dstMat = res;
+}
+
 
 void CutoutImage::colorDispResult(const cv::Mat picMat, cv::Mat cutPicBitMat, cv::Point cutPicAnchorPoint , cv::Mat &mergeColorMat)
 {
@@ -753,8 +826,10 @@ void CutoutImage::edgeBlur( const cv::Mat colorMat, const cv::Mat maskMat, int p
     cv::cvtColor(maskMatClone, bgrMaskMat, CV_GRAY2BGR);
     cv::Mat smoothMask;
     cv::Mat tmp;
-    CutoutImage::smoothContours( colorMatClone, bgrMaskMat, parameter, tmp, smoothMask );
-    CutoutImage::translucentEdge(tmp, smoothMask, maskMat, dstMat);
+    CutoutImage::cutMatByMaskAndReturnBGRA(colorMatClone, maskMat, tmp);
+    dstMat = tmp;
+    //CutoutImage::smoothContours( colorMatClone, bgrMaskMat, parameter, tmp, smoothMask );
+    //CutoutImage::translucentEdge(tmp, smoothMask, maskMat, dstMat);
 }
 /*
  将输入的二值图边缘平滑，用锐利边缘抠取输入的彩色图，然后再将彩色图与平滑边缘的图进行融合
@@ -829,14 +904,8 @@ void CutoutImage::filterImageEdgeAndBlurMerge( const cv::Mat colorMat, const cv:
                     testEdgeDataRowData[x*3 + 2] = cutBigColorMatRowData[x*3 + 2];
                 }
             }
-            
         }
     }
-    
-//    cv::imshow("cutBigColorMat", cutBigColorMat);
-//    cv::imshow("cutBigColorMatFilter", cutBigColorMatFilter);
-//    cv::imshow("fooRusultMat", fooRusultMat);
-//    cv::imshow(" testEdgeData ", testEdgeData);
 }
 
 void CutoutImage::makeWhite2Black( const cv::Mat srcMat, cv::Mat &dstMat)
@@ -860,6 +929,28 @@ void CutoutImage::makeWhite2Black( const cv::Mat srcMat, cv::Mat &dstMat)
         }
     }
     dstMat = srcMatClone.clone();
+}
+
+void CutoutImage::cutMatByMaskAndReturnBGRA (const cv::Mat srcMat, const cv::Mat maskMat, cv::Mat &dstMat) {
+    cv::Mat bgraMat = cv::Mat(srcMat.size(), CV_8UC4, cv::Scalar(0,0,0,0));
+    int matW = srcMat.cols;
+    int matH = srcMat.rows;
+    cv::Mat srcMatClone = srcMat.clone();
+    cv::Mat maskMatClone = maskMat.clone();
+    for (int y = 0; y < matH; y++) {
+        uchar *srcMatCloneRowData = srcMatClone.ptr<uchar>(y);
+        uchar *bgraMatRowData = bgraMat.ptr<uchar>(y);
+        uchar *maskMatCloneRowData = maskMatClone.ptr<uchar>(y);
+        for (int x = 0; x < matW; x++) {
+            if(maskMatCloneRowData[x] != 0){
+                bgraMatRowData[x*4 + 0] = srcMatCloneRowData[x*3 + 0];
+                bgraMatRowData[x*4 + 1] = srcMatCloneRowData[x*3 + 1];
+                bgraMatRowData[x*4 + 2] = srcMatCloneRowData[x*3 + 2];
+                bgraMatRowData[x*4 + 3] = 255;
+            }
+        }
+    }
+    dstMat = bgraMat.clone();
 }
 
 void  CutoutImage::smoothContours(const cv::Mat srcMat ,const cv::Mat cutMat, int parameter, cv::Mat &dstMat ,cv::Mat &smoothMask)
@@ -1082,13 +1173,13 @@ cv::Mat CutoutImage::scaleFCMI2InputColorImageSize( const cv::Mat srcMat )
         int scaleToWidth = (int)(((float)srcMat.cols/(float)srcMat.rows)*(float)inputColorImageSize.height);
         
         if(scaleToWidth <= inputColorImageSize.width){
-            cv::resize(srcMat, aMat, cv::Size(scaleToWidth,scaleToHeight));
+            cv::resize(srcMat, aMat, cv::Size(scaleToWidth,scaleToHeight), 0, 0, CV_INTER_NN);
             cv::Rect copyRect = cv::Rect( (inputColorImageSize.width - scaleToWidth)/2,0,scaleToWidth,scaleToHeight );
             aMat.copyTo(rMat(copyRect));
         }else{
             scaleToWidth = inputColorImageSize.width;
             scaleToHeight = (int)(  ((float)srcMat.rows/(float)srcMat.cols)*(float)inputColorImageSize.width );
-            cv::resize(srcMat, aMat, cv::Size(scaleToWidth,scaleToHeight));
+            cv::resize(srcMat, aMat, cv::Size(scaleToWidth,scaleToHeight), 0, 0, CV_INTER_NN);
             cv::Rect copyRect = cv::Rect( 0, (inputColorImageSize.height - scaleToHeight)/2, scaleToWidth, scaleToHeight );
             aMat.copyTo(rMat(copyRect));
         }
@@ -1097,7 +1188,7 @@ cv::Mat CutoutImage::scaleFCMI2InputColorImageSize( const cv::Mat srcMat )
     {
         int scaleToHeight = int(((float)srcMat.rows/(float)srcMat.cols)*(float)inputColorImageSize.width);
         int scaleToWidth =  inputColorImageSize.width;
-        cv::resize(srcMat, aMat, cv::Size(scaleToWidth,scaleToHeight));
+        cv::resize(srcMat, aMat, cv::Size(scaleToWidth,scaleToHeight), 0, 0, CV_INTER_NN);
         cv::Rect copyRect = cv::Rect( (inputColorImageSize.width - scaleToWidth)/2,0,scaleToWidth,scaleToHeight );
         aMat.copyTo(rMat(copyRect));
     }

@@ -17,9 +17,8 @@ class CutoutImagePacking{
 public:
     CutoutImagePacking();
     ~CutoutImagePacking();
-    void setColorImage(cv::Mat srcImg, int maxSeedMatNum);                                                 //设置要计算的彩色图
-    void setMaskColor(cv::Scalar maskColor);                                            //设置输出观测mask的颜色
-    
+    void setColorImage(cv::Mat srcImg, int maxSeedMatNum);      //设置要计算的彩色图
+    void setMaskColor(cv::Scalar maskColor);                    //设置输出观测mask的颜色
     void drawMask( std::vector<cv::Point> selectPoint, int lineWidth, cv::Mat & drawResult, bool &haveCutMat);          //直接添加mask不带任何分割算法
     void creatMask( std::vector<cv::Point> selectPoint, int lineWidth, cv::Mat & drawResult, bool &haveCutMat);         //设置需要区域分割的点，输出计算后的融合结果
     void deleteMask( std::vector<cv::Point> selectPoint, int lineWidth, cv::Mat & drawResult, bool & haveCutMat);        //在mask中删除添加选择点，输出计算后的融合结果

@@ -22,7 +22,8 @@ public:
     void processImageAddMask(std::vector<cv::Point> mouseSlideRegionDiscrete , const cv::Mat srcMat, cv::Mat &dstMat , int lineWidth, const cv::Mat colorMatForShow );  //最后一个参数用于将生成的矩形向外扩展一些
     void processImageDeleteMask(std::vector<cv::Point> mouseSlideRegionDiscrete , cv::Mat &seedStoreMat,const cv::Mat srcMat, cv::Mat &dstMat , int lineWidth );//seedmat将被修改，因为删除了部分内容
     void colorDispResultWithFullSeedMat( const cv::Mat picMat, const cv::Mat seedMat ); //需要这个函数用于外部debug
-    void rotateMat (const cv::Mat srcMat ,cv::Mat &dstMat,const cv::Mat colorMat);
+    void rotateMat (const cv::Mat srcMat ,cv::Mat &dstMat,const cv::Mat colorMat, const cv::Mat wholeImage, cv::Mat &wholeImageCut);
+//    void rotateMat (const cv::Mat srcMat ,cv::Mat &dstMat,const cv::Mat colorMat);
     cv::Mat getMergeResult();
     void edgeBlur( const cv::Mat colorMat, const cv::Mat maskMat, int parameter, cv::Mat &dstMat ); //边缘模糊与融合算法
    
@@ -32,7 +33,9 @@ public:
     
     bool matHaveMask(cv::Mat inputMat);
     
-    
+    void addAlphaChannle (const cv::Mat srcMat , cv::Mat &dstMat);
+    void cutMatByMaskAndReturnBGRA (const cv::Mat srcMat, const cv::Mat maskMat, cv::Mat &dstMat);
+    void imageEdgeBlur( const cv::Mat bgraImg, const cv::Mat wholeImage , cv::Mat &dstMat );
 public:
     cv::Mat classCutMat;
     cv::Mat classMergeMat;

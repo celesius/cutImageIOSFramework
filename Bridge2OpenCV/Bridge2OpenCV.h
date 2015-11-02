@@ -1,26 +1,13 @@
 //
-//  Bridge2OpenCV.h
-//  Bridge2OpenCV
+//  bridge2OpenCV.h
+//  cutImageIOS
 //
-//  Created by lixu on 15/10/27.
-//  Copyright (c) 2015年 lixu. All rights reserved.
+//  Created by vk on 15/8/24.
+//  Copyright (c) 2015年 quxiu8. All rights reserved.
 //
-
-#import <UIKit/UIKit.h>
-
-//! Project version number for Bridge2OpenCV.
-FOUNDATION_EXPORT double Bridge2OpenCVVersionNumber;
-
-//! Project version string for Bridge2OpenCV.
-FOUNDATION_EXPORT const unsigned char Bridge2OpenCVVersionString[];
-
-// In this header, you should import all the public headers of your framework using statements like #import <Bridge2OpenCV/PublicHeader.h>
 
 #import <Foundation/Foundation.h>
-//#import <UIKit/UIKit.h>
-
-#ifndef Bridge2OpenCV_h
-#define Bridge2OpenCV_h
+#import <UIKit/UIKit.h>
 
 @protocol Bridge2OpenCVDelegate  <NSObject>
 -(void) resultImageReady:(UIImage *) sendImage andHaveMaskMat:(bool) have;
@@ -44,4 +31,3 @@ FOUNDATION_EXPORT const unsigned char Bridge2OpenCVVersionString[];
 
 @end
 
-#endif

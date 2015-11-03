@@ -2,8 +2,8 @@
 //  Bridge2OpenCVTests.m
 //  Bridge2OpenCVTests
 //
-//  Created by lixu on 15/10/27.
-//  Copyright (c) 2015年 lixu. All rights reserved.
+//  Created by clover on 15/10/27.
+//  Copyright (c) 2015年 clover. All rights reserved.
 //
 
 #import <UIKit/UIKit.h>

@@ -39,6 +39,7 @@ public:
 public:
     cv::Mat classCutMat;
     cv::Mat classMergeMat;
+    cv::Mat classMaskMat;
     cv::Size inputColorImageSize;
     bool matHaveMaskBool;
     

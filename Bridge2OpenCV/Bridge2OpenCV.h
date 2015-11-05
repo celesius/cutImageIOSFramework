@@ -10,23 +10,23 @@
 #import <UIKit/UIKit.h>
 
 @protocol Bridge2OpenCVDelegate  <NSObject>
--(void) resultImageReady:(UIImage *) sendImage andHaveMaskMat:(bool) have;
+- (void)resultImageReady:(UIImage *) sendImage andHaveMaskMat:(bool) have;
 @end
 
 @interface Bridge2OpenCV : NSObject
--(id) init;
--(id) initWithImage:(UIImage *)setImage;
--(void) setCalculateImage:(UIImage *)setImage andWindowSize:(CGSize) winSize;
-- (void) updateWindowSize:(CGSize) winSize;
--(void) setDrawPoint:(NSMutableArray*)selectPoint andLineWidth:(int)lineWidth;
--(void) setCreatPoint:(NSMutableArray*)selectPoint andLineWidth:(int)lineWidth;
--(void) setDeletePoint:(NSMutableArray*)selectPoint andLineWidth:(int)lineWidth;
--(UIImage *) getCutResult;
--(NSMutableArray *) getMutableCutResult;
--(void) resetAllMask;
--(void) redoPoint;
--(void) undoPoint;
-
+- (id)init;
+- (id)initWithImage:(UIImage *)setImage;
+- (void)setCalculateImage:(UIImage *)setImage andWindowSize:(CGSize) winSize;
+- (void)updateWindowSize:(CGSize) winSize;
+- (void)setDrawPoint:(NSMutableArray*)selectPoint andLineWidth:(int)lineWidth;
+- (void)setCreatPoint:(NSMutableArray*)selectPoint andLineWidth:(int)lineWidth;
+- (void)setDeletePoint:(NSMutableArray*)selectPoint andLineWidth:(int)lineWidth;
+- (UIImage *)getCutResult;
+- (NSMutableArray *)getMutableCutResult;
+- (void)resetAllMask;
+- (void)redoPoint;
+- (void)undoPoint;
+- (UIImage*)imageWhiteToSetColor:(UIImage*) image setColor:(UIColor *) color;
 @property (nonatomic,weak) id<Bridge2OpenCVDelegate> delegate;
 
 @end

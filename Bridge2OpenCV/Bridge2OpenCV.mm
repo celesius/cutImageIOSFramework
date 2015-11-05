@@ -330,8 +330,6 @@
     return finalImage;
 }
 
-
-
 void ProviderReleaseData (void *info, const void *data, size_t size)
 {
     free((void*)data);
@@ -374,6 +372,56 @@ void ProviderReleaseData (void *info, const void *data, size_t size)
         
     }
     
+    // context to image
+    CGDataProviderRef dataProvider = CGDataProviderCreateWithData(NULL, rgbImageBuf, bytesPerRow * imageHeight, ProviderReleaseData);
+    CGImageRef imageRef = CGImageCreate(imageWidth, imageHeight, 8, 32, bytesPerRow, colorSpace,
+                                        kCGImageAlphaPremultipliedLast| kCGBitmapByteOrder32Little, dataProvider,
+                                        NULL, true, kCGRenderingIntentDefault);
+    CGDataProviderRelease(dataProvider);
+    
+    UIImage* resultUIImage = [UIImage imageWithCGImage:imageRef];
+    
+    // release
+    CGImageRelease(imageRef);
+    CGContextRelease(context);
+    CGColorSpaceRelease(colorSpace);
+    
+    return resultUIImage;
+}
+
+- (UIImage*) imageWhiteToSetColor:(UIImage*) image setColor:(UIColor *) color;
+{
+    const int imageWidth = image.size.width;
+    const int imageHeight = image.size.height;
+    size_t      bytesPerRow = imageWidth * 4;
+    uint32_t* rgbImageBuf = (uint32_t*)malloc(bytesPerRow * imageHeight);
+    
+    //   create context
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+    CGContextRef context = CGBitmapContextCreate(rgbImageBuf, imageWidth, imageHeight, 8, bytesPerRow, colorSpace,
+                                                 kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedLast);
+    CGContextDrawImage(context, CGRectMake(0, 0, imageWidth, imageHeight), image.CGImage);
+    CGFloat fr,fg,fb,fa;
+    [color getRed:&fr green:&fg blue:&fb alpha:&fa];
+    // traverse pixe
+    int pixelNum = imageWidth * imageHeight;
+    uint32_t* pCurPtr = rgbImageBuf;
+    for (int i = 0; i < pixelNum; i++, pCurPtr++)
+    {
+        //        if ((*pCurPtr & 0xFFFFFF00) == 0xffffff00)    // make white to Transparent
+        if ((*pCurPtr & 0xFFFFFF00) == 0x00000000)    // / make black to Transparent
+        {
+            uint8_t* ptr = (uint8_t*)pCurPtr;
+            ptr[0] = 0;
+        }
+        else {
+            uint8_t* ptr = (uint8_t*)pCurPtr;
+            ptr[0] = (uchar)(fa*255);
+            ptr[1] = (uchar)(fb*255);
+            ptr[2] = (uchar)(fg*255);
+            ptr[3] = (uchar)(fr*255);
+        }
+    }
     // context to image
     CGDataProviderRef dataProvider = CGDataProviderCreateWithData(NULL, rgbImageBuf, bytesPerRow * imageHeight, ProviderReleaseData);
     CGImageRef imageRef = CGImageCreate(imageWidth, imageHeight, 8, 32, bytesPerRow, colorSpace,

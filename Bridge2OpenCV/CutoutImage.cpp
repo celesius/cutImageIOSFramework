@@ -789,9 +789,9 @@ void CutoutImage::colorDispResultWithFullSeedMat(const cv::Mat picMat,const cv::
             if(oneChannelData == 255)
             {
                 CutoutImage::matHaveMaskBool = true;
-                showPicLineData[x] = 255;
-                showPicLineData[x + 1] =  showPicLineData[x + 1]/2;
-                showPicLineData[x + 2] =  showPicLineData[x + 2]/2;
+                showPicLineData[x] = showPicLineData[x]/2 + 197/2;
+                showPicLineData[x + 1] =  showPicLineData[x + 1]/2 + 81/2;
+                showPicLineData[x + 2] =  showPicLineData[x + 2]/2 + 223/2;
                 showPicLineData[x + 3] =  255;
             }
         }
@@ -802,6 +802,7 @@ void CutoutImage::colorDispResultWithFullSeedMat(const cv::Mat picMat,const cv::
     //cv::imshow("showPic",showPic);
     //cv::imshow("orgGray", showPic);
     CutoutImage::classMergeMat = showPic.clone();
+    CutoutImage::classMaskMat = showSeed.clone();
 }
 
 bool CutoutImage::matHaveMask(cv::Mat inputMat){
@@ -814,7 +815,8 @@ bool CutoutImage::matHaveMask(cv::Mat inputMat){
 }
 
 cv::Mat CutoutImage::getMergeResult(){
-    return CutoutImage::classMergeMat;
+    //return CutoutImage::classMergeMat;
+    return classMaskMat;
 }
 
 void CutoutImage::edgeBlur( const cv::Mat colorMat, const cv::Mat maskMat, int parameter, cv::Mat &dstMat )

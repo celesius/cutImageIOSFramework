@@ -253,20 +253,14 @@ void CloverGrabCut::grabcutByMergeToMatAndMskMat(const cv::Mat mergeToMat ,const
     cv::Mat aBgd;
     cv::Mat aFgd;
     
-    cv::Mat srcScale;
-    cv::Mat aGcutScale;
-//    cv::grabCut(srcImage, aGcut,cv::Rect(), aBgd, aFgd, 1, cv::GC_INIT_WITH_MASK);
-    scaleImg(srcImage, 1, srcScale);
-    scaleImg(aGcut, 1, aGcutScale);
-   
-    int c = cv::countNonZero(aGcutScale);
+    
+    int c = cv::countNonZero(aGcut);
     if(c>0){
-        checkGcut(aGcutScale);
-        cv::grabCut(srcScale, aGcutScale,cv::Rect(), aBgd, aFgd, 1, cv::GC_INIT_WITH_MASK);
+        checkGcut(aGcut);
+        cv::grabCut(srcImage.clone(), aGcut,cv::Rect(), aBgd, aFgd, 1, cv::GC_INIT_WITH_MASK);
     }
     else
         printf("!!!!!!!!!!!!!!!!!!!!!!!\n");
-    scaleImg(aGcutScale, 1, aGcut);
     cv::resize(aGcut, aGcut, orgSize);
     cv::Mat bitMask = getBinMaskByMask(aGcut);
     
